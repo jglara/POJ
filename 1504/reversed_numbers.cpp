@@ -40,6 +40,99 @@
 #include <sstream>
 #include <string>
 
+
+int main(int argc, char *argv[])
+{
+	int nlines(0);
+	std::string line;
+
+	// Read input: A single integer N
+	{
+		getline(std::cin, line);
+		std::stringstream myStream(line);
+		myStream >> nlines;
+	}
+
+	 for(int i=0; i<nlines; i++) {
+
+		 // read characters and feed the acumulator
+
+		 getline(std::cin, line);
+		 std::stringstream myStream(line);
+		 std::string first_number;
+		 std::string second_number;
+
+		 myStream >> first_number;
+		 myStream >> second_number;
+
+		 std::string::iterator it_first = first_number.begin();
+		 std::string::iterator it_second = second_number.begin();
+
+		 //std::cout << "Adding " << first_number  << " + " << second_number << std::endl;
+
+		 int pos=0;
+		 int carry=0;
+		 while (true) {
+
+			 int digit_1(0);
+			 int digit_2(0);
+
+			 bool advanced=false;
+			 if (it_first != first_number.end()) {
+				 digit_1 = *it_first - '0';
+				 it_first ++;
+				 advanced = true;
+			 }
+			 if (it_second != second_number.end()) {
+				 digit_2 = *it_second - '0';
+				 it_second ++;
+				 advanced = true;
+			 }
+
+			 if (!advanced) {
+				 if (carry) {
+					 std::cout << carry;
+				 }
+				 break;
+			 }
+
+
+			 int sum = digit_1 + digit_2 + carry;
+			 carry = 0;
+
+			 if (sum < 10) {
+				 std::cout << sum;
+				 ++pos;
+			 } else if (sum == 10) {
+				 if (pos > 0 ) {
+					 std::cout << 0;
+				 }
+				 carry = 1;
+			 } else {
+				 std::cout << sum - 10;
+				 carry =1;
+				 ++pos;
+			 }
+
+
+
+
+		 }
+
+
+		 std::cout << std::endl;
+
+
+
+
+	 }
+
+}
+
+
+
+
+/*
 class ReverseAcumulator {
 
 public:
@@ -47,11 +140,11 @@ public:
 	unsigned long getResult() const { return acum_; }
 
 	void addDigit(char d) {
-		/*std::cout << "state_ " << state_
+		std::cout << "state_ " << state_
 				<< ". power_ " << power_
 				<< ". acum_ " << acum_
 				<< ". Adding '" << d << "'"
-				<< std::endl;*/
+				<< std::endl;
 
 		switch (state_) {
 		case INIT_REMOVE_ZEROES:
@@ -98,34 +191,4 @@ private:
 
 
 };
-
-int main(int argc, char *argv[])
-{
-	int nlines(0);
-	std::string line;
-
-	// Read input: A single integer N
-	getline(std::cin, line);
-	std::stringstream myStream(line);
-	myStream >> nlines;
-
-	 for(int i=0; i<nlines; i++) {
-
-		 // read characters and feed the acumulator
-		 ReverseAcumulator acum;
-
-		 getline(std::cin, line);
-		 for (std::string::iterator it = line.begin(); it!=line.end(); it++) {
-			 acum.addDigit(*it);
-		 }
-
-		 // print acumulator output
-		 std::cout << acum.getResult() << std::endl;
-
-	 }
-
-}
-
-
-
-
+*/
