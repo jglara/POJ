@@ -37,6 +37,8 @@
  *
  */
 #include <iostream>
+#include <sstream>
+#include <string>
 
 class ReverseAcumulator {
 
@@ -45,6 +47,12 @@ public:
 	unsigned long getResult() const { return acum_; }
 
 	void addDigit(char d) {
+		/*std::cout << "state_ " << state_
+				<< ". power_ " << power_
+				<< ". acum_ " << acum_
+				<< ". Adding '" << d << "'"
+				<< std::endl;*/
+
 		switch (state_) {
 		case INIT_REMOVE_ZEROES:
 		{
@@ -52,7 +60,9 @@ public:
 			case '0':
 				break; // ignore leading zeroes
 			default:
-				acum_ += power_ * ('0' - d); power_ *= 10;
+				acum_ += power_ * (d- '0');
+				power_ *= 10;
+				state_ = ADD_DIGITS;
 			}
 		}
 		break;
@@ -66,7 +76,8 @@ public:
 			}
 			break;
 			default:
-				acum_ += power_ * ('0' - d); power_ *= 10;
+				acum_ += power_ * (d-'0');
+				power_ *= 10;
 			}
 		}
 		break;
@@ -90,18 +101,22 @@ private:
 
 int main(int argc, char *argv[])
 {
-	int nlines;
+	int nlines(0);
+	std::string line;
 
 	// Read input: A single integer N
-	 std::cin >> nlines;
+	getline(std::cin, line);
+	std::stringstream myStream(line);
+	myStream >> nlines;
 
-	 for(int line=0; line<nlines; line++) {
+	 for(int i=0; i<nlines; i++) {
 
 		 // read characters and feed the acumulator
 		 ReverseAcumulator acum;
-		 char c;
-		 while (std::cin >> c) {
-			 acum.addDigit(c);
+
+		 getline(std::cin, line);
+		 for (std::string::iterator it = line.begin(); it!=line.end(); it++) {
+			 acum.addDigit(*it);
 		 }
 
 		 // print acumulator output
