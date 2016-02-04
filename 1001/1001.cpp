@@ -25,7 +25,7 @@ public:
 			}
 		}
 
-		for (int i = other.num_.size()-1; i >= other.num_decimals_; --i) {
+		for (int i = other.num_.size()-1; i > other.num_decimals_; --i) {
 			if (other.num_[i] == 0) {
 				-- it_end ;
 			} else {
@@ -52,7 +52,7 @@ public:
 			}
 		}
 
-		for (unsigned int i = other.num_.size(); i > other.num_decimals_; --i) {
+		for (unsigned int i = other.num_.size(); i >= other.num_decimals_; --i) {
 			if (other.num_[i] == 0) {
 				-- it_end ;
 			} else {
@@ -160,12 +160,17 @@ private:
 
 std::ostream &operator<<(std::ostream& stream, BigNumber &bn)
 {
-	//stream << "(" << bn.num_decimals_ << ") ";
-	if ((bn.num_.size()<= bn.num_decimals_)  && (bn.num_decimals_ > 0)){
+	//stream << "(" << bn.num_decimals_ << ", " << bn.num_.size() << ") ";
+
+	int i=bn.num_.size()-1;
+	if (bn.num_[i] == 0 && bn.num_decimals_ == i) {
 		stream << '.';
+		--i;
 	}
-	for (int i=bn.num_.size()-1; i>=0; --i) {
+
+	for (; i>=0; --i) {
 		stream << bn.num_[i];
+
 		if ((i == bn.num_decimals_)  && (bn.num_decimals_ > 0)){
 			stream << '.';
 		}
@@ -188,9 +193,10 @@ int main(void) {
 
 		BigNumber bn(base);
 		//std::cout << bn << "^" << pow << std::endl;
+
 		BigNumber result( bn.pow(pow) );
-		// BigNumber result( bn );
 		std::cout << result << std::endl;
+
 	}
 
 	return 0;
