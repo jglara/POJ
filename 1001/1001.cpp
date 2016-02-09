@@ -6,178 +6,192 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <assert.h>
+#include <stdlib.h>
 
 class BigNumber {
 public:
-	BigNumber(): num_(),num_decimals_(0) {}
-	BigNumber(BigNumber const &other) {
-		// canonize: remove trailing and leading zeroes
-		std::vector<int>::const_iterator it_begin = other.num_.begin();
-		std::vector<int>::const_iterator it_end = other.num_.end();
+  BigNumber(): num_(),power_ten_(0) {}
+  BigNumber(BigNumber const &other) {
+    // canonize: remove trailing and leading zeroes
+    std::vector<int>::const_iterator it_begin = other.num_.begin();
+    std::vector<int>::const_iterator it_end = other.num_.end();
+    power_ten_ = other.power_ten_ + other.getNumZerosLeft();
 
-		num_decimals_ = other.num_decimals_;
-		for (unsigned int i = 0; i < other.num_decimals_; ++i) {
-			if (other.num_[i] == 0) {
-				++ it_begin ;
-				-- num_decimals_ ;
-			} else {
-				break;
-			}
-		}
+    // std::cout << "new BN from " << other
+    //           << ". zl=" << other.getNumZerosLeft()
+    //           << ". zr=" << other.getNumZerosRight()
+    //           << std::endl;
+    
+    num_.assign(it_begin + other.getNumZerosLeft(), it_end - other.getNumZerosRight());
+  }
 
-		for (int i = other.num_.size()-1; i > other.num_decimals_; --i) {
-			if (other.num_[i] == 0) {
-				-- it_end ;
-			} else {
-				break;
-			}
-		}
-		num_.assign(it_begin,it_end);
-	}
+  BigNumber canonize() {
+    std::vector<int>::const_iterator it_begin = num_.begin();
+    std::vector<int>::const_iterator it_end = num_.end();
 
-	BigNumber &operator=(BigNumber const &other) {
-		if (this == &other) return *this;
+    BigNumber other;
 
-		// canonize: remove trailing and leading zeroes
-		std::vector<int>::const_iterator it_begin = other.num_.begin();
-		std::vector<int>::const_iterator it_end = other.num_.end();
+    other.power_ten_ = power_ten_ + getNumZerosLeft();
 
-		num_decimals_ = other.num_decimals_;
-		for (unsigned int i = 0; i < other.num_decimals_; ++i) {
-			if (other.num_[i] == 0) {
-				++ it_begin ;
-				-- num_decimals_;
-			} else {
-				break;
-			}
-		}
+    // std::cout << "canonize BN from " << *this
+    //           << ". zl=" << getNumZerosLeft()
+    //           << ". zr=" << getNumZerosRight()
+    //           << std::endl;
 
-		for (unsigned int i = other.num_.size(); i >= other.num_decimals_; --i) {
-			if (other.num_[i] == 0) {
-				-- it_end ;
-			} else {
-				break;
-			}
-		}
+    other.num_.assign(it_begin + getNumZerosLeft(), it_end - other.getNumZerosRight());
+
+    return other;
+  }
+
+  BigNumber(int digits, int power_ten): num_(digits,0), power_ten_(power_ten) { }
+  BigNumber(std::string str)
+    {
+      power_ten_ = 0;
+
+      // store backwards and remove '.'
+      for (int i=str.size()-1; i>=0; --i) {
+
+        if (str[i] == '.') {
+          power_ten_ = -(str.size() - i -1) ;
+        } else {
+          num_.push_back(str[i] - '0');
+        }
+      }
+    }
 
 
-		num_.assign(it_begin,it_end);
+  // multiply by itself
+  BigNumber pow2() const
+    {
+      BigNumber result;
+      for (unsigned int i=0; i<num_.size(); i++) {
+        multiply(num_[i],i,result);
+      }
 
+      result.power_ten_ = power_ten_ * 2;
+      return result;
+    }
 
-		return *this;
-	}
+  // multiply by another number
+  BigNumber multiply(BigNumber const &other) const
+    {
+      BigNumber result;
+      for (unsigned int i=0; i<other.num_.size(); i++) {
+        multiply(other.num_[i],i,result);
+      }
 
-	BigNumber(int digits, int decimals): num_(digits,0), num_decimals_(decimals) { }
-	BigNumber(std::string str)
-	{
-		num_decimals_ = 0;
+      result.power_ten_ = power_ten_ + other.power_ten_;
+      return result;
 
-		// store backwards and remove '.'
-		for (int i=str.size()-1; i>=0; --i) {
+    }
 
-			if (str[i] == '.') {
-				num_decimals_ = str.size() - i -1 ;
-			} else {
-				num_.push_back(str[i] - '0');
-			}
-		}
-	}
+  // power to the n
+  BigNumber pow(unsigned int n) const
+    {
 
-	// multiply by a digit, sum to acum starting by pos
-	void multiply(int digit, int shift, BigNumber &acum) const
-	{
+      if (n==1) {
+        return *this;
+      } else if (n==2) {
+        return pow2();
+      }
 
-		acum.num_.resize(num_.size() + shift, 0);
+      BigNumber temp(pow(n/2));;
+      BigNumber temp2(temp.pow2());
 
-		unsigned int carry=0;
-		for (unsigned int i=0; i<num_.size(); i++) {
-			unsigned int temp = digit  * num_[i] + carry + acum.num_[i+shift];
-			acum.num_[i+shift] = temp % 10;
-			carry = temp / 10;
-		}
-
-		while (carry > 0) {
-			acum.num_.push_back(carry % 10);
-			carry = carry / 10;
-		}
-
-	}
-
-	// multiply by itself
-	BigNumber pow2() const
-	{
-		BigNumber result;
-		for (unsigned int i=0; i<num_.size(); i++) {
-			multiply(num_[i],i,result);
-		}
-
-		result.num_decimals_ = num_decimals_ * 2;
-		return result;
-	}
-
-	// multiply by another number
-	BigNumber multiply(BigNumber const &other) const
-	{
-		BigNumber result;
-		for (unsigned int i=0; i<other.num_.size(); i++) {
-			multiply(other.num_[i],i,result);
-		}
-
-		result.num_decimals_ = num_decimals_ + other.num_decimals_;
-		return result;
-
-	}
-
-	// power to the n
-	BigNumber pow(unsigned int n) const
-	{
-
-		if (n==1) {
-			return *this;
-		} else if (n==2) {
-			return pow2();
-		}
-
-		BigNumber temp(pow(n/2));;
-		BigNumber temp2(temp.pow2());
-
-		if ((n%2) == 0) {
-			return temp2;
-		} else {
-			return temp2.multiply(*this);
-		}
-	}
+      if ((n%2) == 0) {
+        return temp2;
+      } else {
+        return temp2.multiply(*this);
+      }
+    }
 
 
 
-	friend std::ostream &operator<<(std::ostream& stream, BigNumber &bn);
+  friend std::ostream &operator<<(std::ostream& stream, const BigNumber &bn);
 
 private:
-	std::vector<int> num_;
-	unsigned int num_decimals_;
+  std::vector<int> num_;
+  int power_ten_;
+
+  // multiply by a digit, sum to acum starting by pos
+  void multiply(int digit, int shift, BigNumber &acum) const
+    {
+
+      acum.num_.resize(num_.size() + shift, 0);
+
+      unsigned int carry=0;
+      for (unsigned int i=0; i<num_.size(); i++) {
+        unsigned int temp = digit  * num_[i] + carry + acum.num_[i+shift];
+        acum.num_[i+shift] = temp % 10;
+        carry = temp / 10;
+      }
+
+      while (carry > 0) {
+        acum.num_.push_back(carry % 10);
+        carry = carry / 10;
+      }
+
+    }
+
+  unsigned int getNumZerosLeft() const {
+    int n=0;
+    for (unsigned int i = 0; i < num_.size(); ++i) {
+      if (num_[i] == 0) {
+        ++ n ;
+      } else {
+        break;
+      }
+    }
+
+    return n;
+  }
+
+  unsigned int getNumZerosRight() const {
+    if (num_.empty()) return 0;
+
+    int n=0;
+    for (unsigned int i = num_.size()-1; i>0; --i) {
+      if (num_[i] == 0) {
+        ++ n ;
+      } else {
+        break;
+      }
+    }
+
+    return n;
+  }
 };
 
 
-std::ostream &operator<<(std::ostream& stream, BigNumber &bn)
+std::ostream &operator<<(std::ostream& stream, const BigNumber &bn)
 {
-	//stream << "(" << bn.num_decimals_ << ", " << bn.num_.size() << ") ";
+  // stream << "(" << bn.power_ten_ << ", " << bn.num_.size() << ") ";
 
-	int i=bn.num_.size()-1;
-	if (bn.num_[i] == 0 && bn.num_decimals_ == i) {
-		stream << '.';
-		--i;
-	}
-
-	for (; i>=0; --i) {
-		stream << bn.num_[i];
-
-		if ((i == bn.num_decimals_)  && (bn.num_decimals_ > 0)){
-			stream << '.';
-		}
-	}
+  if (bn.num_.empty()) return stream;
 
 
-	return stream;
+  if ((bn.power_ten_ < 0) && (-bn.power_ten_ >= bn.num_.size())) {
+    stream << '.';
+    stream << std::string((-bn.power_ten_) - bn.num_.size(), '0');
+  }
+
+
+  int i=bn.num_.size();
+  while (i>0) {
+    --i;
+    stream << bn.num_[i];
+          
+    if ((i!= 0) && (i == -bn.power_ten_)){
+      stream << '.';
+    }
+  };
+
+  if (bn.power_ten_ > 0) {
+    stream << std::string(bn.power_ten_,'0');
+  }
+
+  return stream;
 
 }
 
@@ -186,18 +200,18 @@ std::ostream &operator<<(std::ostream& stream, BigNumber &bn)
 ///////////////////////////////////////////////////////7
 int main(void) {
 
-	std::string base;
-	unsigned int pow;
-	while(std::cin>>base>>pow) {
-		//std::cout << base << "^" << pow_ << std::endl;
+  std::string base;
+  unsigned int pow;
+  while(std::cin>>base>>pow) {
+    //std::cout << base << "^" << pow_ << std::endl;
 
-		BigNumber bn(base);
-		//std::cout << bn << "^" << pow << std::endl;
+    BigNumber bn(base);
+    //std::cout << bn << "^" << pow << std::endl;
 
-		BigNumber result( bn.pow(pow) );
-		std::cout << result << std::endl;
+    BigNumber result( bn.pow(pow).canonize() );
+    std::cout << result << std::endl;
 
-	}
+  }
 
-	return 0;
+  return 0;
 }
