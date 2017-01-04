@@ -41,3 +41,92 @@
 //    Output one line for each case: the arrival time of
 //    Charley. Round up (ceiling) the value when dealing with a
 //    fraction.
+
+#include <iostream>
+#include <math.h>
+#include <vector>
+#include <utility>
+///////////////////////////////////////////////////////
+
+typedef std::pair<float, float> bike_t; // velocity in m/s and initial pos
+typedef std::vector< bike_t > bikes_vec_t;
+
+
+// return tim of interception
+float calc_time_intercept(bike_t bike1, bike_t bike2)
+{
+  return (bike1.second - bike2.second) / (bike2.first - bike1.first);
+}
+  
+
+//
+bool find_next_bike_intercept(bikes_vec_t::iterator begin, bikes_vec_t::iterator end, bike_t &charley, float &charley_pos, float final_destination)
+{
+  //std::cout << "Finding next intercept Charley pos: " << charley_pos << ". Charley vector vel: " << charley.first << " + e0: " << charley.second << std::endl;
+  float min_t(1000000);
+  float min_pos(0);
+  bikes_vec_t::iterator min_bike;
+  bool found(false);
+  
+  for (bikes_vec_t::iterator it = begin; it != end; ++it) {
+    float t_intercept = calc_time_intercept(*it, charley);
+    float pos = (*it).first * t_intercept + (*it).second;
+    
+    //std::cout << "Interception with vel: " << it->first << "+ e0: " << it->second << ". t= " << t_intercept << ". pos = " << pos << std::endl;
+
+    if ((pos >= charley_pos) && (pos < final_destination) && ((*it).first > charley.first) ) {
+      if ((t_intercept >=0) && (t_intercept <= min_t)) {
+        min_t = t_intercept;
+        min_pos = pos;
+        min_bike = it;
+        found = true;
+      }
+    }
+    
+  }
+
+  if (found) {
+    charley = *min_bike;
+    charley_pos = min_pos;
+  }
+  return found;
+}
+
+int main(void) {
+  unsigned int N;
+  const unsigned int TOTAL_DISTANCE = 4500; // meters
+  while (std::cin >> N) {
+    if (N==0) return 0;
+
+    // read N bikes info
+    bikes_vec_t bikes;
+    bike_t charley(0,0);
+    float charley_pos=0;
+    
+    for (unsigned int i=0; i<N; i++) {
+      float vel, t0, initial_pos;
+      std::cin >> vel >> t0;
+
+      // change vel from km/h to m/s
+      vel = vel * (1000.0/3600.0);
+      initial_pos = - vel * t0;
+        
+      bikes.push_back(std::make_pair(vel,initial_pos));
+    }
+
+    // Loop thru bikes until we reach the final_destination
+    while(1) {
+      if (!find_next_bike_intercept(bikes.begin(), bikes.end(), charley, charley_pos, TOTAL_DISTANCE)) {
+        // arrive to final destination. Return the time
+        std::cout <<  ceil((TOTAL_DISTANCE - charley.second) / charley.first) << std::endl;
+        break;
+      }
+        
+      
+    }
+
+    
+  }
+
+
+}
