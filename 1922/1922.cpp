@@ -49,11 +49,11 @@ int main(void) {
   unsigned int N;
   const unsigned int TOTAL_DISTANCE = 4500; // meters
   while (std::cin >> N) {
-    if (N==0) return 0;
+    if (N==0) break;
 
-    float min_t(TOTAL_DISTANCE/ (1000.0 / 3600.0));
+    double min_t(TOTAL_DISTANCE/ (1000.0 / 3600.0));
     for (unsigned int i=0; i<N; i++) {
-      float vel, t0, final_t;
+      double vel, t0, final_t;
       std::cin >> vel >> t0;
 
       // If the rider starts before charlie, either we don't cross him (if it faster) or charley catch him, but it is slower; so ignore them
